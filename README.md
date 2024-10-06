@@ -1,0 +1,27 @@
+# MC Modpack Downloader
+
+This is a "simple" modpack downloader for Minecraft, written in Python.
+
+## Supported formats
+
+Currently, the only supported pack specification is Modrinth's mrpack format, but support for CurseForge modpacks is likely to come at a later date.
+Other pack forms may be considered.
+
+## How does this work?
+
+Modrinth's `mrpack` format is just a `zip` file with a renamed extension. So, the program downloads the `mrpack` file and renames it to have the `.zip` extension.
+Afterwards, the program reads the `modrinth.index.json` file, which contains links to download projects in the pack. It's why modpacks are so light, because they are (usually) links instead of actual mods.
+
+If the modpack contains an `overrides` folder, which may be the case for most modpacks, it will also copy over the `overrides/` contents.
+
+Lastly, it will delete the `overrides/` and `modrinth.index.json` directory/file, as it's not needed after this.
+
+You can now drag the folders into your instance!
+
+## What security measures are put to ensure the files are the correctly downloaded projects?
+
+Great question! This program (as of the time of writing this, at least) has no checks for now. However, Modrinth's JSON file has both SHA1 and SHA256 values of the projects in the pack. Adding a file hash checker that checks both the SHA values to ensure legitimacy could be good for mod security, and is something I'm interested in adding to the downloader module.
+
+## Should I use this?
+
+Absolutely... not! If you can, try to use a third-party launcher instead. (For `mrpack` packs, you can use Prism, Modrinth or ATLauncher, all open-source.) This was more a project for fun and shouldn't be taken seriously *for now*.
