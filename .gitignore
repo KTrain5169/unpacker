@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+.env
+# Outputs folder, in case testing is done
+downloaded-mrpacks/
