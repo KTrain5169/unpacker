@@ -20,7 +20,7 @@ You can now drag the folders into your instance!
 
 ## What security measures are put to ensure the files are the correctly downloaded projects?
 
-Great question! This program (as of the time of writing this, at least) has no checks for now. However, Modrinth's JSON file has both SHA1 and SHA256 values of the projects in the pack. Adding a file hash checker that checks both the SHA values to ensure legitimacy could be good for mod security, and is something I'm interested in adding to the downloader module.
+Great question! This program (as of the time of writing this, at least) has no checks for now. However, Modrinth's JSON file has both SHA-1 and SHA-512 values of the projects in the pack. Adding a file hash checker that checks both the SHA values to ensure legitimacy could be good for mod security, and is something I'm interested in adding to the downloader module.
 
 ## Should I use this?
 
