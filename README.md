@@ -24,4 +24,4 @@ Great question! This program (as of the time of writing this, at least) has no c
 
 ## Should I use this?
 
-Absolutely... not! If you can, try to use a third-party launcher instead. (For `mrpack` packs, you can use Prism, Modrinth or ATLauncher, all open-source.) This was more a project for fun and shouldn't be taken seriously *for now*.
+Absolutely... not! If you can, try to use a third-party launcher instead. (For `mrpack` packs, you can use [Prism](https://prismlauncher.org), [Modrinth](https://modrinth.com/app) or [ATLauncher](https://atlauncher.com), all open-source.) This was more a project for fun and shouldn't be taken seriously *for now*.
