@@ -1,10 +1,10 @@
-# MC Modpack Downloader
+# unpacker - a Minecraft modpack extractor
 
-This is a "simple" modpack downloader for Minecraft, written in Python.
+This is a "simple" modpack downloader & extractor for Minecraft, written in Python.
 
 ## Supported formats
 
-Currently, the only supported pack specification is Modrinth's mrpack format, but support for CurseForge modpacks is likely to come at a later date.
+Currently, the only supported pack specification is Modrinth's mrpack format, but support for CurseForge modpacks *might* come at a later date.
 Other pack forms may be considered.
 
 ## How does this work?
