@@ -8,69 +8,53 @@ from tkinter import messagebox
 
 
 class ModrinthProcessor:
-    def process(self, manifest_path, overrides_path, destination_folder, modpack_name, status_callback):
+    def process(self, manifest_path, overrides_path, destination_folder, modpack_name, status_callback=print):
+        # Ensure destination directory is set up
         destination_folder = Path(destination_folder) / modpack_name
+        
+        # Check for and handle the manifest file
+        if manifest_path and manifest_path.exists():
+            with open(manifest_path, 'r') as manifest_file:
+                manifest = json.load(manifest_file)
+                for file in manifest.get('files', []):
+                    mod_url = file['downloads'][0]
+                    mod_path = file.get('path', 'mods')
+                    mod_file_path = destination_folder / mod_path
+                    mod_file_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Download mod files
+                    try:
+                        mod_response = requests.get(mod_url)
+                        if mod_response.status_code == 200:
+                            with open(mod_file_path, 'wb') as mod_file:
+                                mod_file.write(mod_response.content)
+                            status_callback(f"Downloaded {mod_file_path}")
+                        else:
+                            status_callback(f"Failed to download {mod_file_path}: {mod_response.status_code}")
+                    except Exception as e:
+                        status_callback(f"Error downloading {mod_file_path}: {e}")
+        else:
+            status_callback("No manifest file found, skipping file downloads.")
 
-        # this doesn't work lmao
-        if destination_folder.exists():
-            messagebox.showerror(
-                "Error", f"The folder '{destination_folder}' already exists. Please delete it before trying again.")
-            return
-
-        destination_folder.mkdir(parents=True)
-        status_callback(f"Created folder '{destination_folder}'.")
-
-        # Process the overrides folder, if it exists and is not None
+        # Handle the overrides folder
         if overrides_path and overrides_path.exists():
             for item in overrides_path.iterdir():
                 target_path = destination_folder / item.name
                 if item.is_dir():
-                    if target_path.exists() and target_path.is_dir():
-                        status_callback(
-                            f"Merging contents into existing directory '{target_path}'.")
-                        shutil.copytree(item, target_path, dirs_exist_ok=True)
-                    else:
-                        shutil.copytree(item, target_path)
+                    shutil.copytree(item, target_path, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, target_path)
-            status_callback("Overrides folder contents copied.")
+            status_callback("Overrides folder processed.")
+
+        # Cleanup: remove the overrides folder and manifest file after processing
+        if overrides_path and overrides_path.exists():
             shutil.rmtree(overrides_path)
-            status_callback("Overrides folder deleted.")
-
-        # Process the Modrinth index file
+            status_callback(f"Removed overrides folder: {overrides_path}")
+        
         if manifest_path and manifest_path.exists():
-            with open(manifest_path, 'r') as manifest_file:
-                manifest = json.load(manifest_file)
-
-            # Start a new thread for each file download and hash verification
-            threads = []
-            for file in manifest['files']:
-                mod_url = file['downloads'][0]
-                mod_path = file.get('path', 'mods')
-                expected_sha1 = file.get('hashes', {}).get('sha1')
-                expected_sha512 = file.get('hashes', {}).get('sha512')
-
-                # Determine the target file path
-                mod_file_path = destination_folder / mod_path
-
-                # Ensure the folder for the file exists
-                mod_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-                # Create and start a new thread for downloading and verifying the file
-                thread = threading.Thread(
-                    target=self.download_and_verify,
-                    args=(mod_url, mod_file_path, expected_sha1,
-                          expected_sha512, status_callback)
-                )
-                thread.start()
-                threads.append(thread)
-
-            # Wait for all threads to complete
-            for thread in threads:
-                thread.join()
-
             manifest_path.unlink()
-            status_callback("Modrinth index file deleted.")
+            status_callback(f"Removed manifest file: {manifest_path}")
+
 
     def download_and_verify(self, mod_url, mod_file_path, expected_sha1, expected_sha512, status_callback):
         """Downloads the file and verifies its hash."""
