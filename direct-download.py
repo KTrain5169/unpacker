@@ -1,8 +1,8 @@
 import os
 import requests
 from pathlib import Path
-from downloader.modpack_processor import ModpackProcessor
-from downloader.modrinth_packs import ModrinthProcessor
+from modules.modpack_processor import ModpackProcessor
+from modules.modrinth_packs import ModrinthProcessor
 
 def main():
     # Get modpack URL and output folder from the user

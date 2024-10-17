@@ -5,9 +5,50 @@ import hashlib
 import threading
 from pathlib import Path
 from tkinter import messagebox
+from io import BytesIO
 
 
 class ModrinthProcessor:
+    def __init__(self):
+        self.search_results = []
+
+    def search_modrinth(self, query, callback):
+        """Searches Modrinth for modpacks matching the query and uses a callback to return results."""
+        # Start a thread to perform the search
+        search_thread = threading.Thread(target=self._perform_search, args=(query, callback))
+        search_thread.start()
+
+    def _perform_search(self, query, callback):
+        """Performs the actual search request to the Modrinth API."""
+        # Make the request to Modrinth's search endpoint
+        try:
+            response = requests.get(f"https://api.modrinth.com/v2/search?query={query}")
+            if response.status_code == 200:
+                data = response.json()
+                self.search_results = [hit for hit in data["hits"] if hit["project_type"] == "modpack"]
+
+                # Invoke the callback with the search results
+                callback(self.search_results)
+            else:
+                callback(None)
+                print(f"Failed to fetch results: {response.status_code}")
+        except requests.RequestException as e:
+            callback(None)
+            print(f"An error occurred: {e}")
+
+    def fetch_icon(self, icon_url):
+        """Fetches the icon for a modpack and returns it as an Image."""
+        try:
+            response = requests.get(icon_url)
+            if response.status_code == 200:
+                return BytesIO(response.content)
+            else:
+                print(f"Failed to download icon: {response.status_code}")
+                return None
+        except requests.RequestException as e:
+            print(f"Error fetching icon: {e}")
+            return None
+
     def process(self, manifest_path, overrides_path, destination_folder, modpack_name, status_callback=print):
         # Ensure destination directory is set up
         destination_folder = Path(destination_folder) / modpack_name
@@ -95,3 +136,11 @@ class ModrinthProcessor:
 
         # Compare the calculated hashes with the expected ones
         return (file_sha1 == expected_sha1) and (file_sha512 == expected_sha512)
+
+if __name__ == "__main__":
+    print("Testing BytesIO...")
+    try:
+        data = BytesIO(b"test")
+        print("BytesIO is working.")
+    except NameError as e:
+        print(f"NameError occurred: {e}")
