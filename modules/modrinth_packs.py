@@ -13,21 +13,15 @@ class ModrinthProcessor:
         self.search_results = []
 
     def search_modrinth(self, query, callback):
-        """Searches Modrinth for modpacks matching the query and uses a callback to return results."""
-        # Start a thread to perform the search
         search_thread = threading.Thread(target=self._perform_search, args=(query, callback))
         search_thread.start()
 
     def _perform_search(self, query, callback):
-        """Performs the actual search request to the Modrinth API."""
-        # Make the request to Modrinth's search endpoint
         try:
             response = requests.get(f"https://api.modrinth.com/v2/search?query={query}")
             if response.status_code == 200:
                 data = response.json()
                 self.search_results = [hit for hit in data["hits"] if hit["project_type"] == "modpack"]
-
-                # Invoke the callback with the search results
                 callback(self.search_results)
             else:
                 callback(None)
@@ -35,6 +29,23 @@ class ModrinthProcessor:
         except requests.RequestException as e:
             callback(None)
             print(f"An error occurred: {e}")
+
+    def get_modpack_version(self, project_id, callback):
+        """Fetches the latest version data for a given project and retrieves the download URL."""
+        try:
+            response = requests.get(f"https://api.modrinth.com/v2/project/{project_id}/version")
+            if response.status_code == 200:
+                versions = response.json()
+                if versions and versions[0]["files"]:
+                    callback(versions[0]["files"][0]["url"])
+                else:
+                    callback(None)
+            else:
+                callback(None)
+                print(f"Failed to fetch version data: {response.status_code}")
+        except requests.RequestException as e:
+            callback(None)
+            print(f"An error occurred while fetching version data: {e}")
 
     def fetch_icon(self, icon_url):
         """Fetches the icon for a modpack and returns it as an Image."""
