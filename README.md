@@ -9,7 +9,7 @@ Other pack forms may be considered.
 
 ## How does this work?
 
-Modrinth's `mrpack` format is just a `zip` file with a renamed extension. So, the program downloads the `mrpack` file and renames it to have the `.zip` extension.
+Modrinth's `mrpack` format is just a `zip` file with a renamed extension. So, the program downloads the `mrpack` file and extracts it like a `zip` file.
 Afterwards, the program reads the `modrinth.index.json` file, which contains links to download projects in the pack. It's why modpacks are so light, because they are (usually) links instead of actual mods.
 
 If the modpack contains an `overrides` folder, which may be the case for most modpacks, it will also copy over the `overrides/` contents.
@@ -27,3 +27,10 @@ Update: The program now has support for ensuring modpack dependency integrity (i
 ## Should I use this?
 
 Absolutely... not! If you can, try to use a third-party launcher instead. (For `mrpack` packs, you can use [Prism](https://prismlauncher.org), [Modrinth](https://modrinth.com/app) or [ATLauncher](https://atlauncher.com), all open-source.) This was more a project for fun and shouldn't be taken seriously *for now*.
+
+## CLI usage
+
+The direct-download script can also double as a CLI app. Here are the commands for it:
+
+* --url (-u for short) - Specifies the download URL.
+* --output (-o for short) - Specifies the output directory. If omitted but --url or -u is used, it will download into the current working directory instead.
