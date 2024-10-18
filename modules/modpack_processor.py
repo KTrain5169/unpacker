@@ -7,6 +7,12 @@ import hashlib
 from pathlib import Path
 from urllib.parse import unquote
 
+
+headers = {
+    "User-Agent": "unpacker/v1.0.0-develop | github.com/KTrain5169/unpacker"
+}
+
+
 class ModpackProcessor:
     def __init__(self, destination_folder):
         self.destination_folder = Path(destination_folder)
@@ -21,7 +27,7 @@ class ModpackProcessor:
         print(message)
         status_callback(message)
 
-        response = requests.get(zip_url, stream=True)
+        response = requests.get(zip_url, stream=True, headers=headers)
         if response.status_code != 200:
             message = "Failed to download modpack."
             print(message)
@@ -75,6 +81,9 @@ class ModpackProcessor:
             self.cleanup(manifest_path, overrides_path, target_folder, status_callback)
         else:
             print("No manifest or overrides found, skipping cleanup.")
+            
+        finish_message = "Finished unpacking, enjoy the pack!"
+        status_callback(finish_message)
 
         return manifest_path, overrides_path, modpack_name
 
@@ -122,39 +131,45 @@ class ModpackProcessor:
 
             # Download the mod file from the 'downloads' key
             download_url = file['downloads'][0]
-            response = requests.get(download_url, stream=True)
+            response = requests.get(download_url, stream=True, headers=headers)
             if response.status_code == 200:
                 with open(mod_file_path, 'wb') as mod_file:
                     for chunk in response.iter_content(chunk_size=8192):
                         mod_file.write(chunk)
 
                 # Verify the hash if provided
-                sha1 = file.get('hashes', {}).get('sha1')
-                sha512 = file.get('hashes', {}).get('sha512')
-
-                if sha1:
-                    # Calculate SHA1
-                    hasher = hashlib.sha1()
-                    with open(mod_file_path, 'rb') as f:
-                        while chunk := f.read(8192):
-                            hasher.update(chunk)
-                    calculated_sha1 = hasher.hexdigest()
-                    if calculated_sha1 != sha1:
-                        status_callback(f"SHA1 hash mismatch for {file['path']}!")
-
-                if sha512:
-                    # Calculate SHA512
-                    hasher = hashlib.sha512()
-                    with open(mod_file_path, 'rb') as f:
-                        while chunk := f.read(8192):
-                            hasher.update(chunk)
-                    calculated_sha512 = hasher.hexdigest()
-                    if calculated_sha512 != sha512:
-                        status_callback(f"SHA512 hash mismatch for {file['path']}!")
+                self.verify_hashes(mod_file_path, file, status_callback)
 
                 status_callback(f"Downloaded and verified {file['path']} to {mod_file_path}")
             else:
                 status_callback(f"Failed to download mod file: {file['path']}")
+
+    def verify_hashes(self, mod_file_path, file, status_callback):
+        import hashlib
+
+        # Verify the hash if provided
+        sha1 = file.get('hashes', {}).get('sha1')
+        sha512 = file.get('hashes', {}).get('sha512')
+
+        if sha1:
+            # Calculate SHA1
+            hasher = hashlib.sha1()
+            with open(mod_file_path, 'rb') as f:
+                while chunk := f.read(8192):
+                    hasher.update(chunk)
+            calculated_sha1 = hasher.hexdigest()
+            if calculated_sha1 != sha1:
+                status_callback(f"SHA1 hash mismatch for {file['path']}!")
+
+        if sha512:
+            # Calculate SHA512
+            hasher = hashlib.sha512()
+            with open(mod_file_path, 'rb') as f:
+                while chunk := f.read(8192):
+                    hasher.update(chunk)
+            calculated_sha512 = hasher.hexdigest()
+            if calculated_sha512 != sha512:
+                status_callback(f"SHA512 hash mismatch for {file['path']}!")
 
     def cleanup(self, manifest_path, overrides_path, target_folder, status_callback=print):
         # Remove the overrides folder if it exists

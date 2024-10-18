@@ -7,9 +7,9 @@ import threading
 class ModrinthSearchGUI:
     def __init__(self, root):
         self.root = root
+        self.processor = ModrinthProcessor()
         self.root.title("unpacker - Modrinth Search")
         self.root.geometry("800x600")
-        self.processor = ModrinthProcessor()
         self.modpack_processor = None  # Initialize in the download step
 
         # GUI setup for searching and displaying results
@@ -35,6 +35,10 @@ class ModrinthSearchGUI:
         self.output_folder_label = Label(root, text="No folder selected")
         self.output_folder_label.pack(pady=5)
         Button(root, text="Download Modpack", command=self.start_download).pack(pady=10)
+
+        # Status label for displaying download progress
+        self.status_label = Label(root, text="", font=("Arial", 10, "italic"), fg="blue")
+        self.status_label.pack(pady=5)
 
         # Search results and output folder variables
         self.search_results = []
@@ -100,13 +104,15 @@ class ModrinthSearchGUI:
             self.modpack_processor = ModpackProcessor(self.output_folder)
             threading.Thread(
                 target=self.modpack_processor.process_modpack,
-                args=(download_url,)
+                args=(download_url, self.update_status)
             ).start()
         else:
             messagebox.showerror("Error", "Failed to retrieve download URL for the selected modpack.")
 
     def update_status(self, message):
-        self.output_folder_label.config(text=message)
+        # Update both the terminal and the GUI status label with the current message
+        print(message)
+        self.status_label.config(text=message)
 
 if __name__ == "__main__":
     root = Tk()
