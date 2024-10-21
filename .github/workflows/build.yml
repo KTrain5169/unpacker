@@ -1,0 +1,71 @@
+name: Build app
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+
+jobs:
+    build-app:
+        name: Build app
+        runs-on: ${{ matrix.runner_os }}
+        strategy:
+            matrix:
+                os: ['Windows', 'Mac', 'Linux']
+                include:
+                    - os: 'Windows'
+                      runner_os: 'windows-latest'
+                    - os: 'Mac'
+                      runner_os: 'macos-latest'
+                    - os: 'Linux'
+                      runner_os: 'ubuntu-latest'
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+			
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.11'
+                cache: 'pip'
+			
+            - name: Install reqs
+              run: |
+                pip install -r requirements.txt
+                pip install pyinstaller
+
+            - name: Build apps
+              run: |
+                pyinstaller --windowed search-gui.py --name unpacker-Modrinth-Search-(${{ matrix.os }})
+                pyinstaller direct-download.py --name unpacker-CLI (${{ matrix.os }})
+                pyinstaller --onefile --windowed search-gui.py --name unpacker Modrinth Search (${{ matrix.os }})
+                pyinstaller --onefile direct-download.py --name unpacker CLI (${{ matrix.os }})
+            
+            - name: (Linux) Tar files
+              if: ${{ matrix.runner_os == 'ubuntu-latest' }}
+              run: |
+                chmod +x dist/unpacker-Modrinth-Search-${{ matrix.os }}
+                chmod +x dist/unpacker-CLI
+                chmod +x dist/unpacker-Modrinth-Search-${{ matrix.os }}/unpacker-Modrinth-Search-${{ matrix.os }}
+                chmod +x dist/unpacker-CLI/unpacker-CLI
+                tar -czvf unpacker-${{ matrix.os }}-dist.tar.gz dist/*
+                tar -czvf unpacker-${{ matrix.os }}-build.tar.gz build/*
+            
+            - name: (Windows) Zip files using tar
+              if: ${{ matrix.runner_os == 'windows-latest' }}
+              run: |
+                tar -cvf unpacker-${{ matrix.os }}-dist.zip dist/*
+                tar -cvf unpacker-${{ matrix.os }}-build.zip build/*
+            
+            - name: (Mac) Zip files
+              if: ${{ matrix.runner_os == 'macos-latest' }}
+              run: |
+                zip -r unpacker-${{ runner.os }}-dist.zip dist/*
+                zip -r unpacker-${{ runner.os }}-build.zip build/*
+            
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: ${{ matrix.os }} artifacts & build results
+                path: unpacker-${{ runner.os }}-*
