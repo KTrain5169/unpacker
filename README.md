@@ -20,9 +20,7 @@ You can now drag the folders into your instance!
 
 ## What security measures are put to ensure the files are the correctly downloaded projects?
 
-Great question! This program (as of the time of writing this, at least) ~~has no checks for now. However, Modrinth's JSON file has both SHA1 and SHA256 values of the projects in the pack. Adding a file hash checker that checks both the SHA values to ensure legitimacy could be good for mod security, and is something I'm interested in adding to the downloader module.~~
-
-Update: The program now has support for ensuring modpack dependency integrity (i.e. the projects in the modpack). SHA-1 and SHA-512 are the only values, since they are required in a `modrinth.index.json`.
+Great question! This program currently has support for SHA-1 and SHA-512 hashes contained within a modpack's manifest file. This is because Modrinth modpacks are required to have their SHA-1 and SHA-512 values in the manifest. While others are optional and can be included, it's not a requirement and so the program assumes it doesn't exist.
 
 ## Should I use this?
 
@@ -32,5 +30,6 @@ Absolutely... not! If you can, try to use a third-party launcher instead. (For `
 
 The direct-download script can also double as a CLI app. Here are the commands for it:
 
-* --url (-u for short) - Specifies the download URL.
-* --output (-o for short) - Specifies the output directory. If omitted but --url or -u is used, it will download into the current working directory instead.
+- --url (-u for short) - Specifies the download URL.
+- --output (-o for short) - Specifies the output directory. If omitted but --url or -u is used, it will download into the current working directory instead.
+- --server (-s for short) - Downloads server-side mods instead of client-side mods.

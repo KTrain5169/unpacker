@@ -4,13 +4,12 @@ from modules.modrinth_packs import ModrinthProcessor
 from modules.modpack_processor import ModpackProcessor
 import threading
 
+
 class ModrinthSearchGUI:
     def __init__(self, root):
         self.root = root
         self.processor = ModrinthProcessor()
-        self.root.title("unpacker - Modrinth Search")
-        self.root.geometry("800x600")
-        self.modpack_processor = None  # Initialize in the download step
+        self.modpack_processor = None
 
         # GUI setup for searching and displaying results
         Label(root, text="Search Modrinth for Modpacks:").pack(pady=5)
@@ -21,23 +20,35 @@ class ModrinthSearchGUI:
         # Dropdown for modpack selection
         self.modpack_dropdown = ttk.Combobox(root, state="readonly", width=50)
         self.modpack_dropdown.pack(pady=5)
-        
+
         # Modpack info display
         self.modpack_title = Label(root, text="", font=("Arial", 14, "bold"))
         self.modpack_title.pack(pady=5)
-        self.modpack_description = Label(root, text="", wraplength=500, justify="left")
+        self.modpack_description = Label(
+            root, text="", wraplength=500, justify="left")
         self.modpack_description.pack(pady=5)
         self.modpack_icon_label = Label(root)
         self.modpack_icon_label.pack(pady=5)
 
+        # Dropdown for selecting client or server
+        Label(root, text="Select Version Type (Client or Server):").pack(
+            pady=5)
+        self.version_type = ttk.Combobox(root, state="readonly", width=20)
+        self.version_type['values'] = ('Client', 'Server')
+        self.version_type.current(0)  # Default to "Client"
+        self.version_type.pack(pady=5)
+
         # Button to download modpack
-        Button(root, text="Select Output Folder", command=self.select_output_folder).pack(pady=5)
+        Button(root, text="Select Output Folder",
+               command=self.select_output_folder).pack(pady=5)
         self.output_folder_label = Label(root, text="No folder selected")
         self.output_folder_label.pack(pady=5)
-        Button(root, text="Download Modpack", command=self.start_download).pack(pady=10)
+        Button(root, text="Download Modpack",
+               command=self.start_download).pack(pady=10)
 
         # Status label for displaying download progress
-        self.status_label = Label(root, text="", font=("Arial", 10, "italic"), fg="blue")
+        self.status_label = Label(root, text="", font=(
+            "Arial", 10, "italic"), fg="blue")
         self.status_label.pack(pady=5)
 
         # Search results and output folder variables
@@ -58,10 +69,12 @@ class ModrinthSearchGUI:
             modpack_names = [result["title"] for result in results]
             self.modpack_dropdown["values"] = modpack_names
             self.modpack_dropdown.current(0)
-            self.modpack_dropdown.bind("<<ComboboxSelected>>", self.on_dropdown_select)
+            self.modpack_dropdown.bind(
+                "<<ComboboxSelected>>", self.on_dropdown_select)
             self.on_dropdown_select(None)  # Show first result by default
         else:
-            messagebox.showerror("Error", "No results found or an error occurred.")
+            messagebox.showerror(
+                "Error", "No results found or an error occurred.")
 
     def on_dropdown_select(self, event):
         selection = self.modpack_dropdown.current()
@@ -70,7 +83,6 @@ class ModrinthSearchGUI:
         self.modpack_description.config(text=modpack["description"])
         self.selected_modpack_id = modpack["project_id"]
 
-        # Fetch and display icon
         icon_url = modpack.get("icon_url")
         if icon_url:
             icon_data = self.processor.fetch_icon(icon_url)
@@ -85,34 +97,47 @@ class ModrinthSearchGUI:
         folder_selected = filedialog.askdirectory()
         if folder_selected:
             self.output_folder = folder_selected
-            self.output_folder_label.config(text=f"Output folder: {self.output_folder}")
+            self.output_folder_label.config(
+                text=f"Output folder: {self.output_folder}")
 
     def start_download(self):
         if not self.output_folder:
             messagebox.showerror("Error", "Please select an output folder.")
             return
         if not self.selected_modpack_id:
-            messagebox.showerror("Error", "Please select a modpack to download.")
+            messagebox.showerror(
+                "Error", "Please select a modpack to download.")
             return
 
-        # Fetch modpack download URL and start download
-        self.processor.get_modpack_version(self.selected_modpack_id, self.download_modpack)
+        # Get the selected version type (Client or Server)
+        version_type = self.version_type.get()
 
-    def download_modpack(self, download_url):
+        # Determine if Server mode should be enabled
+        server_mode = version_type == 'Server'
+
+        # Fetch modpack download URL and start download
+        self.processor.get_modpack_version(
+            self.selected_modpack_id,
+            lambda url: self.download_modpack(url, server_mode))
+
+    def download_modpack(self, download_url, server_mode):
         if download_url:
             # Use ModpackProcessor to handle the download and extraction
-            self.modpack_processor = ModpackProcessor(self.output_folder)
+            self.modpack_processor = ModpackProcessor(
+                self.output_folder, server_mode=server_mode)
             threading.Thread(
                 target=self.modpack_processor.process_modpack,
                 args=(download_url, self.update_status)
             ).start()
         else:
-            messagebox.showerror("Error", "Failed to retrieve download URL for the selected modpack.")
+            messagebox.showerror(
+                "Error",
+                "Failed to retrieve download URL for the selected modpack.")
 
     def update_status(self, message):
-        # Update both the terminal and the GUI status label with the current message
         print(message)
         self.status_label.config(text=message)
+
 
 if __name__ == "__main__":
     root = Tk()
