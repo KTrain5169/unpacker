@@ -14,9 +14,10 @@ headers = {
 
 
 class ModpackProcessor:
-    def __init__(self, destination_folder):
+    def __init__(self, destination_folder, server_mode=False):
         self.destination_folder = Path(destination_folder)
         self.destination_folder.mkdir(parents=True, exist_ok=True)
+        self.server_mode = server_mode
 
     def process_modpack(self, zip_url, status_callback=print):
         modpack_name = unquote(Path(zip_url).stem)
@@ -60,7 +61,8 @@ class ModpackProcessor:
         os.remove(zip_path)
 
         # Locate manifest and overrides
-        manifest_path, overrides_path = self._locate_manifest_and_overrides(modpack_name)
+        manifest_path, overrides_path = self._locate_manifest_and_overrides(
+            modpack_name)
 
         # Log found paths
         if manifest_path:
@@ -74,14 +76,16 @@ class ModpackProcessor:
 
         # Process the files from overrides if present
         if overrides_path and overrides_path.exists():
-            self.process_overrides(overrides_path, target_folder, status_callback)
+            self.process_overrides(
+                overrides_path, target_folder, status_callback)
 
         # Cleanup will only happen if we have found files
         if manifest_path or (overrides_path and overrides_path.exists()):
-            self.cleanup(manifest_path, overrides_path, target_folder, status_callback)
+            self.cleanup(manifest_path, overrides_path,
+                         target_folder, status_callback)
         else:
             print("No manifest or overrides found, skipping cleanup.")
-            
+
         finish_message = "Finished unpacking, enjoy the pack!"
         status_callback(finish_message)
 
@@ -101,7 +105,8 @@ class ModpackProcessor:
 
         return manifest_path, overrides_path
 
-    def process_overrides(self, overrides_path, target_folder, status_callback):
+    def process_overrides(self, overrides_path, target_folder,
+                          status_callback):
         for item in overrides_path.iterdir():
             target_path = target_folder / item.name
             if item.is_dir():
@@ -120,9 +125,20 @@ class ModpackProcessor:
 
         # Process each file in the manifest
         for file in manifest['files']:
-            # Check if the mod is client-supported
-            if file.get('env', {}).get('client') == 'unsupported':
-                status_callback(f"Skipping unsupported mod: {file['path']}")
+            # Check if we're in server mode
+            if self.server_mode and file.get('env',
+                                             {}).get(
+                                                'server') == 'unsupported':
+                status_callback(
+                    f"Skipping server-unsupported mod: {file['path']}")
+                continue
+
+            # Otherwise, check if the mod is client-supported
+            if not self.server_mode and file.get('env',
+                                                 {}).get(
+                                                    'client') == 'unsupported':
+                status_callback(
+                    f"Skipping client-unsupported mod: {file['path']}")
                 continue
 
             # Construct the path where the mod should be downloaded
@@ -131,7 +147,7 @@ class ModpackProcessor:
 
             # Download the mod file from the 'downloads' key
             download_url = file['downloads'][0]
-            response = requests.get(download_url, stream=True, headers=headers)
+            response = requests.get(download_url, stream=True)
             if response.status_code == 200:
                 with open(mod_file_path, 'wb') as mod_file:
                     for chunk in response.iter_content(chunk_size=8192):
@@ -140,13 +156,12 @@ class ModpackProcessor:
                 # Verify the hash if provided
                 self.verify_hashes(mod_file_path, file, status_callback)
 
-                status_callback(f"Downloaded and verified {file['path']} to {mod_file_path}")
+                status_callback(
+                 f"Downloaded and verified {file['path']} to {mod_file_path}")
             else:
                 status_callback(f"Failed to download mod file: {file['path']}")
 
     def verify_hashes(self, mod_file_path, file, status_callback):
-        import hashlib
-
         # Verify the hash if provided
         sha1 = file.get('hashes', {}).get('sha1')
         sha512 = file.get('hashes', {}).get('sha512')
@@ -171,7 +186,8 @@ class ModpackProcessor:
             if calculated_sha512 != sha512:
                 status_callback(f"SHA512 hash mismatch for {file['path']}!")
 
-    def cleanup(self, manifest_path, overrides_path, target_folder, status_callback=print):
+    def cleanup(self, manifest_path, overrides_path, target_folder,
+                status_callback=print):
         # Remove the overrides folder if it exists
         if overrides_path and overrides_path.exists():
             shutil.rmtree(overrides_path)
