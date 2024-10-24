@@ -37,18 +37,18 @@ jobs:
 
             - name: Build apps
               run: |
-                pyinstaller --windowed search-gui.py --name unpacker-Modrinth-Search-(${{ matrix.os }})
-                pyinstaller direct-download.py --name unpacker-CLI (${{ matrix.os }})
-                pyinstaller --onefile --windowed search-gui.py --name unpacker Modrinth Search (${{ matrix.os }})
-                pyinstaller --onefile direct-download.py --name unpacker CLI (${{ matrix.os }})
+                pyinstaller --windowed search-gui.py --name unpacker Modrinth Search-${{ matrix.os }}
+                pyinstaller direct-download.py --name unpacker-CLI-${{ matrix.os }}
+                pyinstaller --onefile --windowed search-gui.py --name unpacker Modrinth Search ${{ matrix.os }} onefile
+                pyinstaller --onefile direct-download.py --name unpacker-CLI-${{ matrix.os }}-onefile
             
-            - name: (Linux) Tar files
+            - name: (Linux) Chmod & tar files
               if: ${{ matrix.runner_os == 'ubuntu-latest' }}
               run: |
-                chmod +x dist/unpacker-Modrinth-Search-${{ matrix.os }}
-                chmod +x dist/unpacker-CLI
+                chmod +x dist/unpacker-Modrinth-Search-${{ matrix.os }}-onefile
+                chmod +x dist/unpacker-CLI-${{ matrix.os }}-onefile
                 chmod +x dist/unpacker-Modrinth-Search-${{ matrix.os }}/unpacker-Modrinth-Search-${{ matrix.os }}
-                chmod +x dist/unpacker-CLI/unpacker-CLI
+                chmod +x dist/unpacker-CLI-${{ matrix.os }}/unpacker-CLI-${{ matrix.os }}
                 tar -czvf unpacker-${{ matrix.os }}-dist.tar.gz dist/*
                 tar -czvf unpacker-${{ matrix.os }}-build.tar.gz build/*
             
