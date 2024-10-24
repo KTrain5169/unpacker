@@ -37,9 +37,9 @@ jobs:
 
             - name: Build apps
               run: |
-                pyinstaller --windowed search-gui.py --name unpacker Modrinth Search-${{ matrix.os }}
+                pyinstaller --windowed search-gui.py --name unpacker-Modrinth-Search-${{ matrix.os }}
                 pyinstaller direct-download.py --name unpacker-CLI-${{ matrix.os }}
-                pyinstaller --onefile --windowed search-gui.py --name unpacker Modrinth Search ${{ matrix.os }} onefile
+                pyinstaller --onefile --windowed search-gui.py --name unpacker-Modrinth-Search-${{ matrix.os }}-onefile
                 pyinstaller --onefile direct-download.py --name unpacker-CLI-${{ matrix.os }}-onefile
             
             - name: (Linux) Chmod & tar files
