@@ -1,0 +1,10 @@
+[project]
+name = "unpacker"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "argparse==1.4.0",
+    "pillow>=12.3.0",
+    "requests==2.32.3",
+    "urllib3==2.2.3",
+]
